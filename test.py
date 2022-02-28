@@ -97,7 +97,6 @@ context = tokenizer.encode(
     add_special_tokens=False
 )
 
-
 # gpt2-medium has 24 heads (multi-headed transformers), so
 # past and all_hidden is a tuple of size 24
 def run_normal():
@@ -110,6 +109,7 @@ def run_normal():
 
     for i in range(10):
         logits, past, all_hidden = model(output_so_far)
+        print(logits.shape)
 
         temperature = 1.0
         logits = logits[:, -1, :] / temperature
@@ -140,7 +140,7 @@ def run_bow():
     
     past = None
     last = None
-    for _ in range(10):
+    for _ in range(20):
         if past is None and output_so_far is not None:
             last = output_so_far[:, -1:]
             if output_so_far.shape[1] > 1:
@@ -164,7 +164,6 @@ def run_bow():
         window_mask = torch.ones_like(past[0]).to(device)
 
         for i in range(3):
-            print(i)
             curr_perturbation = [
                 to_var(torch.from_numpy(p_), requires_grad=True, device=device)
                 for p_ in grad_accumulator
@@ -224,7 +223,7 @@ def run_bow():
         last = torch.multinomial(probs, num_samples=1)
         output_so_far = torch.cat((output_so_far, last), dim=1)
 
-    print(tokenizer.decode(output_so_far.tolist()[0]))
+        print(tokenizer.decode(output_so_far.tolist()[0]))
 
 run_bow()
 

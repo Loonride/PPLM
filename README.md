@@ -1,3 +1,11 @@
+# Running Progress Report Code - Alec Blagg, Kir Nagaitsev
+
+In addition to the setup required below, our baseline code can be run with
+
+```bash
+python test.py
+```
+
 # PPLM
 
 This repository contains code to run the Plug and Play Language Model (PPLM), as described in this **[blog post](https://eng.uber.com/pplm)** and **[arXiv paper](https://arxiv.org/abs/1912.02164)**. A **[demo](https://transformer.huggingface.co/model/pplm)** and **[Colab notebook](https://colab.research.google.com/drive/1Ux0Z4-ruiVtJ6jUk98uk6FqfvGHCOYL3)** are also available.
