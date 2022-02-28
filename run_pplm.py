@@ -158,7 +158,10 @@ def perturb_past(
     # Generate a mask is gradient perturbated is based on a past window
     _, _, _, curr_length, _ = past[0].shape
 
+    # the window shifts such that we only apply the gradients to the "window"
+    # of the past we are looking at
     if curr_length > window_length and window_length > 0:
+        # past is in the shape keys, values [2, 1, 16, len, 64]
         ones_key_val_shape = (
                 tuple(past[0].shape[:-2])
                 + tuple([window_length])
@@ -387,8 +390,10 @@ def build_bows_one_hot_vectors(bow_indices, tokenizer, device='cuda'):
 
     one_hot_bows_vectors = []
     for single_bow in bow_indices:
+        # only keep words in the Bag of Words that tokenize to 1 token
         single_bow = list(filter(lambda x: len(x) <= 1, single_bow))
         single_bow = torch.tensor(single_bow).to(device)
+        print(single_bow.shape)
         num_words = single_bow.shape[0]
         one_hot_bow = torch.zeros(num_words, tokenizer.vocab_size).to(device)
         one_hot_bow.scatter_(1, single_bow, 1)
@@ -451,6 +456,9 @@ def full_text_generation(
     else:
         raise Exception("Specify either a bag of words or a discriminator")
 
+    # print(f"Bow indices: {bow_indices}")
+    # print(len(bow_indices[0]))
+    # print(len(build_bows_one_hot_vectors(bow_indices, tokenizer)[0]))
     unpert_gen_tok_text, _, _ = generate_text_pplm(
         model=model,
         tokenizer=tokenizer,
@@ -467,6 +475,8 @@ def full_text_generation(
     pert_gen_tok_texts = []
     discrim_losses = []
     losses_in_time = []
+
+    # return unpert_gen_tok_text, pert_gen_tok_texts, discrim_losses, losses_in_time
 
     for i in range(num_samples):
         pert_gen_tok_text, discrim_loss, loss_in_time = generate_text_pplm(
@@ -655,8 +665,9 @@ def generate_text_pplm(
             last if output_so_far is None
             else torch.cat((output_so_far, last), dim=1)
         )
-        if verbosity_level >= REGULAR:
-            print(tokenizer.decode(output_so_far.tolist()[0]))
+        # print(output_so_far)
+        # if verbosity_level >= REGULAR:
+        #     print(tokenizer.decode(output_so_far.tolist()[0]))
 
     return output_so_far, unpert_discrim_loss, loss_in_time
 
@@ -725,6 +736,8 @@ def run_pplm_example(
             if verbosity_level >= REGULAR:
                 print("discrim = {}, pretrained_model set "
                 "to discriminator's = {}".format(discrim, pretrained_model))
+
+    # print(pretrained_model)
 
     # load pretrained model
     model = GPT2LMHeadModel.from_pretrained(
@@ -798,6 +811,8 @@ def run_pplm_example(
     print("= Unperturbed generated text =")
     print(unpert_gen_text)
     print()
+
+    return
 
     generated_texts = []
 
