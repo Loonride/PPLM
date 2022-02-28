@@ -97,8 +97,6 @@ context = tokenizer.encode(
     add_special_tokens=False
 )
 
-print(context)
-
 
 # gpt2-medium has 24 heads (multi-headed transformers), so
 # past and all_hidden is a tuple of size 24
