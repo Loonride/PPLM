@@ -189,7 +189,7 @@ def perturb_past(
     loss_per_iter = []
     new_accumulated_hidden = None
     for i in range(num_iterations):
-        if verbosity_level >= VERBOSE:
+        if verbosity_level >= VERY_VERBOSE:
             print("Iteration ", i + 1)
         curr_perturbation = [
             to_var(torch.from_numpy(p_), requires_grad=True, device=device)
@@ -266,7 +266,7 @@ def perturb_past(
             loss += kl_loss
 
         loss_per_iter.append(loss.data.cpu().numpy())
-        if verbosity_level >= VERBOSE:
+        if verbosity_level >= VERY_VERBOSE:
             print(' pplm_loss', (loss - kl_loss).data.cpu().numpy())
 
         # compute gradients
@@ -627,7 +627,7 @@ def generate_text_pplm(
             label = torch.tensor([class_label], device=device,
                                  dtype=torch.long)
             unpert_discrim_loss = ce_loss(prediction, label)
-            if verbosity_level >= VERBOSE:
+            if verbosity_level >= VERY_VERBOSE:
                 print(
                     "unperturbed discrim loss",
                     unpert_discrim_loss.data.cpu().numpy()
@@ -811,8 +811,6 @@ def run_pplm_example(
     print("= Unperturbed generated text =")
     print(unpert_gen_text)
     print()
-
-    return
 
     generated_texts = []
 
