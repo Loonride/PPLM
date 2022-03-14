@@ -233,15 +233,20 @@ def perturb_past(
                     inputs_embeds=inputs_embeds
                 )
                 curr_hidden = curr_all_hidden[-1]
+                # print(curr_hidden.shape)
                 new_accumulated_hidden = new_accumulated_hidden + torch.sum(
                     curr_hidden, dim=1)
 
-            prediction = classifier(new_accumulated_hidden /
-                                    (curr_length + 1 + horizon_length))
+            classifier_input = new_accumulated_hidden / (curr_length + 1 + horizon_length)
+            # print(classifier_input.shape)
+            prediction = classifier(classifier_input)
 
+            class_label = 0
             label = torch.tensor(prediction.shape[0] * [class_label],
                                  device=device,
                                  dtype=torch.long)
+            # print(prediction.shape)
+            # print(label)
             discrim_loss = ce_loss(prediction, label)
             if verbosity_level >= VERY_VERBOSE:
                 print(" pplm_discrim_loss:", discrim_loss.data.cpu().numpy())
@@ -393,7 +398,6 @@ def build_bows_one_hot_vectors(bow_indices, tokenizer, device='cuda'):
         # only keep words in the Bag of Words that tokenize to 1 token
         single_bow = list(filter(lambda x: len(x) <= 1, single_bow))
         single_bow = torch.tensor(single_bow).to(device)
-        print(single_bow.shape)
         num_words = single_bow.shape[0]
         one_hot_bow = torch.zeros(num_words, tokenizer.vocab_size).to(device)
         one_hot_bow.scatter_(1, single_bow, 1)
@@ -505,8 +509,8 @@ def full_text_generation(
             verbosity_level=verbosity_level
         )
         pert_gen_tok_texts.append(pert_gen_tok_text)
-        if classifier is not None:
-            discrim_losses.append(discrim_loss.data.cpu().numpy())
+        # if classifier is not None:
+        #     discrim_losses.append(discrim_loss.data.cpu().numpy())
         losses_in_time.append(loss_in_time)
 
     if device == 'cuda':
@@ -587,7 +591,12 @@ def generate_text_pplm(
             pert_past = past
 
         else:
+            # take all hidden states besides the last
+            # (not interested in the prediction at this point from last
+            # hidden state) - this should be the hidden of the current
+            # sequence of text
             accumulated_hidden = unpert_last_hidden[:, :-1, :]
+            # print(accumulated_hidden.shape)
             accumulated_hidden = torch.sum(accumulated_hidden, dim=1)
 
             if past is not None:
@@ -621,19 +630,19 @@ def generate_text_pplm(
         pert_logits = pert_logits[:, -1, :] / temperature  # + SMALL_CONST
         pert_probs = F.softmax(pert_logits, dim=-1)
 
-        if classifier is not None:
-            ce_loss = torch.nn.CrossEntropyLoss()
-            prediction = classifier(torch.mean(unpert_last_hidden, dim=1))
-            label = torch.tensor([class_label], device=device,
-                                 dtype=torch.long)
-            unpert_discrim_loss = ce_loss(prediction, label)
-            if verbosity_level >= VERY_VERBOSE:
-                print(
-                    "unperturbed discrim loss",
-                    unpert_discrim_loss.data.cpu().numpy()
-                )
-        else:
-            unpert_discrim_loss = 0
+        # if classifier is not None:
+        #     ce_loss = torch.nn.CrossEntropyLoss()
+        #     prediction = classifier(torch.mean(unpert_last_hidden, dim=1))
+        #     label = torch.tensor([class_label], device=device,
+        #                          dtype=torch.long)
+        #     unpert_discrim_loss = ce_loss(prediction, label)
+        #     if verbosity_level >= VERY_VERBOSE:
+        #         print(
+        #             "unperturbed discrim loss",
+        #             unpert_discrim_loss.data.cpu().numpy()
+        #         )
+        # else:
+        #     unpert_discrim_loss = 0
 
         # Fuse the modified model and original model
         if perturb:
