@@ -164,8 +164,9 @@ def perturb_past(
     tot_length = length + start_length
     prog = curr_length / tot_length
 
-    if prog > 0.5:
-        num_iterations = 10
+    if loss_type == PPLM_BOW:
+        if prog > 0.5:
+            num_iterations = 10
 
     # the window shifts such that we only apply the gradients to the "window"
     # of the past we are looking at
@@ -267,8 +268,12 @@ def perturb_past(
             prediction = classifier(classifier_input)
 
             # class_label = 0
-            # if prog > 0.5:
-            #     class_label = 3
+            if prog > 0.2:
+                if class_label == 3:
+                    class_label = 2
+                elif class_label == 2:
+                    class_label = 3
+            # print(f"Training on label: {class_label}")
             label = torch.tensor(prediction.shape[0] * [class_label],
                                  device=device,
                                  dtype=torch.long)
@@ -316,7 +321,10 @@ def perturb_past(
                 for index, p_ in enumerate(curr_perturbation)
             ]
 
-        # if prog > 0.5:
+        if loss_type == PPLM_BOW:
+            if prog > 0.5:
+                stepsize = 0.1
+        # if classifier and prog > 0.2:
         #     stepsize = 0.1
 
         # normalize gradients
@@ -346,7 +354,7 @@ def perturb_past(
         for p_ in grad_accumulator
     ]
     pert_past = list(map(add, past, grad_accumulator))
-    pert_past = past
+    # pert_past = past
 
     return pert_past, new_accumulated_hidden, grad_norms, loss_per_iter
 
@@ -671,7 +679,7 @@ def generate_text_pplm(
             label = torch.tensor([class_label], device=device,
                                  dtype=torch.long)
             print(prediction)
-            print(prediction.argmin())
+            print(prediction.argmax())
             print(label)
 
             # unpert_discrim_loss = ce_loss(prediction, label)
