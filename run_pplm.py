@@ -134,7 +134,9 @@ def perturb_past(
         gamma=1.5,
         kl_scale=0.01,
         device='cuda',
-        verbosity_level=REGULAR
+        verbosity_level=REGULAR,
+        length=100,
+        start_length=1,
 ):
     # Generate inital perturbed past
     grad_accumulator = [
@@ -157,6 +159,13 @@ def perturb_past(
     # TODO fix this comment (SUMANTH)
     # Generate a mask is gradient perturbated is based on a past window
     _, _, _, curr_length, _ = past[0].shape
+    # print(curr_length)
+
+    tot_length = length + start_length
+    prog = curr_length / tot_length
+
+    if prog > 0.5:
+        num_iterations = 10
 
     # the window shifts such that we only apply the gradients to the "window"
     # of the past we are looking at
@@ -212,11 +221,27 @@ def perturb_past(
         loss = 0.0
         loss_list = []
         if loss_type == PPLM_BOW or loss_type == PPLM_BOW_DISCRIM:
+            bow_losses = []
             for one_hot_bow in one_hot_bows_vectors:
+                # print(one_hot_bow.shape)
                 bow_logits = torch.mm(probs, torch.t(one_hot_bow))
+                # the more negative this loss is, the less that there is
+                # to do to improve it
                 bow_loss = -torch.log(torch.sum(bow_logits))
-                loss += bow_loss
+                bow_losses.append(bow_loss)
                 loss_list.append(bow_loss)
+            
+            if len(bow_losses) == 2:
+                # loss += prog * (bow_losses[1]) + (1 - prog) * (bow_losses[0])
+                if prog > 0.5:
+                    loss += bow_losses[1]
+                else:
+                    loss += bow_losses[0]
+            else:
+                for bow_loss in bow_losses:
+                    loss += bow_loss
+
+            print(" pplm_bow_loss:", loss.data.cpu().numpy())
             if verbosity_level >= VERY_VERBOSE:
                 print(" pplm_bow_loss:", loss.data.cpu().numpy())
 
@@ -289,6 +314,9 @@ def perturb_past(
                 for index, p_ in enumerate(curr_perturbation)
             ]
 
+        # if prog > 0.5:
+        #     stepsize = 0.1
+
         # normalize gradients
         grad = [
             -stepsize *
@@ -316,6 +344,7 @@ def perturb_past(
         for p_ in grad_accumulator
     ]
     pert_past = list(map(add, past, grad_accumulator))
+    # pert_past = past
 
     return pert_past, new_accumulated_hidden, grad_norms, loss_per_iter
 
@@ -552,6 +581,8 @@ def generate_text_pplm(
             context_t = context_t.unsqueeze(0)
         output_so_far = context_t
 
+    start_length = output_so_far.squeeze().shape[0] - 1
+
     # collect one hot vectors for bags of words
     one_hot_bows_vectors = build_bows_one_hot_vectors(bow_indices, tokenizer,
                                                       device)
@@ -620,7 +651,9 @@ def generate_text_pplm(
                     gamma=gamma,
                     kl_scale=kl_scale,
                     device=device,
-                    verbosity_level=verbosity_level
+                    verbosity_level=verbosity_level,
+                    length=length,
+                    start_length=start_length,
                 )
                 loss_in_time.append(loss_this_iter)
             else:

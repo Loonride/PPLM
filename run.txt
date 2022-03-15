@@ -1,3 +1,26 @@
 python run_pplm.py -D sentiment --class_label 2 --cond_text "My dog died" --length 10 --gamma 1.0 --num_iterations 10 --num_samples 2 --stepsize 0.04 --kl_scale 0.01 --gm_scale 0.95 --sample --verbosity verbose
 
 python run_pplm.py -B military --cond_text "The potato" --length 50 --gamma 1.5 --num_iterations 3 --num_samples 1 --stepsize 0.03 --window_length 5 --kl_scale 0.01 --gm_scale 0.99 --colorama --sample --verbosity verbose
+
+
+
+Paper:
+
+python run_pplm.py -B military\;politics --cond_text "The potato" --length 100 --gamma 1.5 --num_iterations 5 --num_samples 1 --stepsize 0.02 --window_length 5 --kl_scale 0.01 --gm_scale 0.99 --colorama --sample --verbosity verbose --seed 4
+
+
+This:
+python run_pplm.py -B military\;science --cond_text "The potato" --length 100 --gamma 1.5 --num_iterations 5 --num_samples 1 --stepsize 0.02 --window_length 5 --kl_scale 0.01 --gm_scale 0.99 --colorama --sample --verbosity verbose --seed 0
+
+Gets:
+The potato chip is the most popular snack in the world, but is it the healthiest?
+
+We asked the experts to weigh in with their thoughts and opinions. Read what they said.
+
+
+1) "The Potato chip is good for weight loss, but it's probably a bomb for fat loss"
+
+— Dr. Steve Hester, M.D., author of Fat and Health, co-director of the nutrition department at the university of science and technology in bomb research lab
+
+
+
