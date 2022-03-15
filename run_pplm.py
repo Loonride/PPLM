@@ -266,7 +266,9 @@ def perturb_past(
             # print(classifier_input.shape)
             prediction = classifier(classifier_input)
 
-            class_label = 0
+            # class_label = 0
+            # if prog > 0.5:
+            #     class_label = 3
             label = torch.tensor(prediction.shape[0] * [class_label],
                                  device=device,
                                  dtype=torch.long)
@@ -344,7 +346,7 @@ def perturb_past(
         for p_ in grad_accumulator
     ]
     pert_past = list(map(add, past, grad_accumulator))
-    # pert_past = past
+    pert_past = past
 
     return pert_past, new_accumulated_hidden, grad_norms, loss_per_iter
 
@@ -663,19 +665,23 @@ def generate_text_pplm(
         pert_logits = pert_logits[:, -1, :] / temperature  # + SMALL_CONST
         pert_probs = F.softmax(pert_logits, dim=-1)
 
-        # if classifier is not None:
-        #     ce_loss = torch.nn.CrossEntropyLoss()
-        #     prediction = classifier(torch.mean(unpert_last_hidden, dim=1))
-        #     label = torch.tensor([class_label], device=device,
-        #                          dtype=torch.long)
-        #     unpert_discrim_loss = ce_loss(prediction, label)
-        #     if verbosity_level >= VERY_VERBOSE:
-        #         print(
-        #             "unperturbed discrim loss",
-        #             unpert_discrim_loss.data.cpu().numpy()
-        #         )
-        # else:
-        #     unpert_discrim_loss = 0
+        if classifier is not None:
+            # ce_loss = torch.nn.CrossEntropyLoss()
+            prediction = classifier(torch.mean(unpert_last_hidden, dim=1))
+            label = torch.tensor([class_label], device=device,
+                                 dtype=torch.long)
+            print(prediction)
+            print(prediction.argmin())
+            print(label)
+
+            # unpert_discrim_loss = ce_loss(prediction, label)
+            # if verbosity_level >= VERY_VERBOSE:
+            #     print(
+            #         "unperturbed discrim loss",
+            #         unpert_discrim_loss.data.cpu().numpy()
+            #     )
+        else:
+            unpert_discrim_loss = 0
 
         # Fuse the modified model and original model
         if perturb:
