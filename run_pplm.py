@@ -538,7 +538,7 @@ def full_text_generation(
         "The year is 1910",
     ]
 
-    file = open("data/positive.txt", "a")
+    file = open("data/negative.txt", "a")
 
     for i in range(num_samples):
         raw_text = raw_texts[i % len(raw_texts)]
