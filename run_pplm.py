@@ -501,7 +501,7 @@ def full_text_generation(
     # print(f"Bow indices: {bow_indices}")
     # print(len(bow_indices[0]))
     # print(len(build_bows_one_hot_vectors(bow_indices, tokenizer)[0]))
-    unpert_gen_tok_text, _, _ = generate_text_pplm(
+    unpert_gen_tok_text, _, _, _ = generate_text_pplm(
         model=model,
         tokenizer=tokenizer,
         context=context,
@@ -538,7 +538,11 @@ def full_text_generation(
         "The year is 1910",
     ]
 
-    file = open("data/negative.txt", "a")
+    out_name = "negative_to_positive"
+
+    file = open(f"data/{out_name}.txt", "a")
+
+    ls = []
 
     for i in range(num_samples):
         raw_text = raw_texts[i % len(raw_texts)]
@@ -548,7 +552,7 @@ def full_text_generation(
             add_special_tokens=False
         )
 
-        pert_gen_tok_text, discrim_loss, loss_in_time = generate_text_pplm(
+        pert_gen_tok_text, discrim_loss, loss_in_time, unpert_discrim_losses = generate_text_pplm(
             model=model,
             tokenizer=tokenizer,
             context=context,
@@ -573,6 +577,7 @@ def full_text_generation(
             kl_scale=kl_scale,
             verbosity_level=verbosity_level
         )
+        ls.append(unpert_discrim_losses)
         pert_gen_tok_texts.append(pert_gen_tok_text)
 
         pert_gen_text = tokenizer.decode(pert_gen_tok_text.tolist()[0][1:])
@@ -585,6 +590,9 @@ def full_text_generation(
         losses_in_time.append(loss_in_time)
 
     file.close()
+
+    with open(f'data/{out_name}.json', 'w') as f:
+        json.dump(ls, f)
 
     if device == 'cuda':
         torch.cuda.empty_cache()
@@ -636,14 +644,16 @@ def generate_text_pplm(
     unpert_discrim_loss = 0
     loss_in_time = []
 
+    unpert_discrim_losses = []
+
     if verbosity_level >= VERBOSE:
         range_func = trange(length, ascii=True)
     else:
         range_func = range(length)
 
     for i in range_func:
-        # if classifier and i >= 10:
-        #     class_label = 3
+        if classifier and i >= 10:
+            class_label = 2
 
         # Get past/probs for current output, except for last word
         # Note that GPT takes 2 inputs: past + current_token
@@ -719,6 +729,9 @@ def generate_text_pplm(
             # print(label)
 
             unpert_discrim_loss = ce_loss(prediction, label)
+            v = unpert_discrim_loss.item()
+            print(v)
+            unpert_discrim_losses.append(v)
             # print(unpert_discrim_loss)
             # if verbosity_level >= VERY_VERBOSE:
             #     print(
@@ -762,7 +775,7 @@ def generate_text_pplm(
         # if verbosity_level >= REGULAR:
         #     print(tokenizer.decode(output_so_far.tolist()[0]))
 
-    return output_so_far, unpert_discrim_loss, loss_in_time
+    return output_so_far, unpert_discrim_loss, loss_in_time, unpert_discrim_losses
 
 
 def set_generic_model_params(discrim_weights, discrim_meta):
