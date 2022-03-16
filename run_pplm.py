@@ -268,12 +268,11 @@ def perturb_past(
             prediction = classifier(classifier_input)
 
             # class_label = 0
-            if prog > 0.2:
-                if class_label == 3:
-                    class_label = 2
-                elif class_label == 2:
-                    class_label = 3
-            # print(f"Training on label: {class_label}")
+            # if prog > 0.2:
+            #     if class_label == 3:
+            #         class_label = 2
+            #     elif class_label == 2:
+            #         class_label = 3
             label = torch.tensor(prediction.shape[0] * [class_label],
                                  device=device,
                                  dtype=torch.long)
@@ -521,7 +520,34 @@ def full_text_generation(
 
     # return unpert_gen_tok_text, pert_gen_tok_texts, discrim_losses, losses_in_time
 
+    raw_texts = [
+        "Once upon a time",
+        "The book",
+        "The chicken",
+        "The city",
+        "The country",
+        "The horse",
+        "The lake",
+        "The last time",
+        "The movie",
+        "The painting",
+        "The pizza",
+        "The potato",
+        "The president of the country",
+        "The road",
+        "The year is 1910",
+    ]
+
+    file = open("data/positive.txt", "a")
+
     for i in range(num_samples):
+        raw_text = raw_texts[i % len(raw_texts)]
+        print(raw_text)
+        context = tokenizer.encode(
+            tokenizer.bos_token + raw_text,
+            add_special_tokens=False
+        )
+
         pert_gen_tok_text, discrim_loss, loss_in_time = generate_text_pplm(
             model=model,
             tokenizer=tokenizer,
@@ -548,9 +574,17 @@ def full_text_generation(
             verbosity_level=verbosity_level
         )
         pert_gen_tok_texts.append(pert_gen_tok_text)
+
+        pert_gen_text = tokenizer.decode(pert_gen_tok_text.tolist()[0][1:])
+        pert_gen_text = pert_gen_text.replace("\n", " ")
+        file.write(f"{pert_gen_text}\n")
+
+        print(pert_gen_text)
         # if classifier is not None:
         #     discrim_losses.append(discrim_loss.data.cpu().numpy())
         losses_in_time.append(loss_in_time)
+
+    file.close()
 
     if device == 'cuda':
         torch.cuda.empty_cache()
@@ -608,6 +642,8 @@ def generate_text_pplm(
         range_func = range(length)
 
     for i in range_func:
+        # if classifier and i >= 10:
+        #     class_label = 3
 
         # Get past/probs for current output, except for last word
         # Note that GPT takes 2 inputs: past + current_token
@@ -674,15 +710,16 @@ def generate_text_pplm(
         pert_probs = F.softmax(pert_logits, dim=-1)
 
         if classifier is not None:
-            # ce_loss = torch.nn.CrossEntropyLoss()
+            ce_loss = torch.nn.CrossEntropyLoss()
             prediction = classifier(torch.mean(unpert_last_hidden, dim=1))
             label = torch.tensor([class_label], device=device,
                                  dtype=torch.long)
-            print(prediction)
-            print(prediction.argmax())
-            print(label)
+            # print(prediction)
+            # print(prediction.argmax())
+            # print(label)
 
-            # unpert_discrim_loss = ce_loss(prediction, label)
+            unpert_discrim_loss = ce_loss(prediction, label)
+            # print(unpert_discrim_loss)
             # if verbosity_level >= VERY_VERBOSE:
             #     print(
             #         "unperturbed discrim loss",

@@ -31,3 +31,16 @@ We asked the experts to weigh in with their thoughts and opinions. Read what the
 python run_pplm.py -D sentiment --class_label 2 --cond_text "The house" --length 100 --gamma 1.0 --num_iterations 10 --num_samples 1 --stepsize 0.05 --kl_scale 0.01 --gm_scale 0.95 --sample --verbosity verbose
 
 The house is beautifully painted with a stunning collection of exquisite hand carved and exquisitely hand stitched gold leaf artwork. The master suite and master bedroom are also stunningly decorated and include exquisite furniture. The master bedroom is decorated with exquisite furniture including a custom bed, a large velvet covered double mattress, a double bunk bed, a wooden bunk and an oak double bunk with cotton sleeping bag and bug-out bag. The master's cotton slippers are perfect for a cold wet slumber. The master bathroom is
+
+
+python run_pplm.py -D sentiment --class_label 2 --cond_text "The house" --length 50 --gamma 1.0 --num_iterations 10 --num_samples 1 --stepsize 0.06 --kl_scale 0.01 --gm_scale 0.95 --sample --verbosity verbose --seed 1
+
+The house is beautifully appointed.
+
+A truly outstanding example of the new this
+
+This will be my second time doing this.
+
+This time around the color wasn't great, the first time was great.
+
+The last time I did this
