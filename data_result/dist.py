@@ -21,7 +21,6 @@ def gen_response(self, contexts):
     Returns a list, where each element is the response of the corresponding context
 """
 # from main import Model
-import json
 from transformers import GPT2Tokenizer
 
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
@@ -89,12 +88,31 @@ def eval_distinct(hyps_resp):
 
     return dist1, dist2, dist3
 
-strings = [
-           "<|endoftext|>My dog died after getting stuck in a tree. I have had the same bug with a man in power and that power power had power on power go into power go power down power down power down power power down power power down. This has caused power loss power down",
-           "<|endoftext|>The potato is probably the world's most widely eaten plant. But what if it's also the most dangerous? In the last two decades, there's been a dramatic decrease in potato crop damage from crop rot and disease. The decline, which started in",
-           
-]
+pos_input = read_dialog('./../data/positive.txt')
+neg_input = read_dialog('./../data/negative.txt')
+neg2pos_input = read_dialog('./../data/negative_to_positive.txt')
+pos2neg_input = read_dialog('./../data/positive_to_negative.txt')
 
-input = read_dialog('./../output.txt')
+two_input = []
+four_input = []
 
-print(eval_distinct(input))
+for inp in pos_input:
+    two_input.append(inp)
+    four_input.append(inp)
+
+for inp in neg_input:
+    two_input.append(inp)
+    four_input.append(inp)
+
+for inp in neg2pos_input:
+    four_input.append(inp)
+
+for inp in pos2neg_input:
+    four_input.append(inp)
+
+print(eval_distinct(pos_input))
+print(eval_distinct(neg_input))
+print(eval_distinct(neg2pos_input))
+print(eval_distinct(pos2neg_input))
+print(eval_distinct(two_input))
+print(eval_distinct(four_input))

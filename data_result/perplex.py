@@ -1,5 +1,6 @@
 import math
 import torch
+import statistics
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
@@ -26,12 +27,44 @@ def score(sent):
     loss = outputs[0]
     return math.exp(loss.item())
 
-strings = [
-           "<|endoftext|>My dog died after getting stuck in a tree. I have had the same bug with a man in power and that power power had power on power go into power go power down power down power down power power down power power down. This has caused power loss power down",
-           "<|endoftext|>The potato is probably the world's most widely eaten plant. But what if it's also the most dangerous? In the last two decades, there's been a dramatic decrease in potato crop damage from crop rot and disease. The decline, which started in",
-           
-]
+pos_input = read_dialog('./../data/positive.txt')
+neg_input = read_dialog('./../data/negative.txt')
+neg2pos_input = read_dialog('./../data/negative_to_positive.txt')
+pos2neg_input = read_dialog('./../data/positive_to_negative.txt')
 
-input = read_dialog('./../output.txt')
+two_input = []
+four_input = []
 
-print([score(s) for s in input])
+for inp in pos_input:
+    two_input.append(inp)
+    four_input.append(inp)
+
+for inp in neg_input:
+    two_input.append(inp)
+    four_input.append(inp)
+
+for inp in neg2pos_input:
+    four_input.append(inp)
+
+for inp in pos2neg_input:
+    four_input.append(inp)
+
+
+pos_scores = [score(s) for s in pos_input]
+neg_scores = [score(s) for s in neg_input]
+pos2neg_scores = [score(s) for s in pos2neg_input]
+neg2pos_scores = [score(s) for s in neg2pos_input]
+two_input_scores = [score(s) for s in two_input]
+four_input_scores = [score(s) for s in four_input]
+print(statistics.mean(pos_scores))
+print(statistics.stdev(pos_scores))
+print(statistics.mean(neg_scores))
+print(statistics.stdev(neg_scores))
+print(statistics.mean(pos2neg_scores))
+print(statistics.stdev(pos2neg_scores))
+print(statistics.mean(neg2pos_scores))
+print(statistics.stdev(neg2pos_scores))
+print(statistics.mean(two_input_scores))
+print(statistics.stdev(two_input_scores))
+print(statistics.mean(four_input_scores))
+print(statistics.stdev(four_input_scores))
