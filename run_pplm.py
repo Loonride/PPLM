@@ -538,7 +538,8 @@ def full_text_generation(
         "The year is 1910",
     ]
 
-    out_name = "negative_to_positive"
+    out_name = "positive_unsampled"
+    sentiment_switch = False
 
     file = open(f"data/{out_name}.txt", "a")
 
@@ -575,7 +576,8 @@ def full_text_generation(
             gamma=gamma,
             gm_scale=gm_scale,
             kl_scale=kl_scale,
-            verbosity_level=verbosity_level
+            verbosity_level=verbosity_level,
+            sentiment_switch=sentiment_switch,
         )
         ls.append(unpert_discrim_losses)
         pert_gen_tok_texts.append(pert_gen_tok_text)
@@ -591,8 +593,9 @@ def full_text_generation(
 
     file.close()
 
-    with open(f'data/{out_name}.json', 'w') as f:
-        json.dump(ls, f)
+    if sentiment_switch:
+        with open(f'data/{out_name}.json', 'w') as f:
+            json.dump(ls, f)
 
     if device == 'cuda':
         torch.cuda.empty_cache()
@@ -624,7 +627,8 @@ def generate_text_pplm(
         gamma=1.5,
         gm_scale=0.9,
         kl_scale=0.01,
-        verbosity_level=REGULAR
+        verbosity_level=REGULAR,
+        sentiment_switch=None
 ):
     output_so_far = None
     if context:
@@ -652,8 +656,12 @@ def generate_text_pplm(
         range_func = range(length)
 
     for i in range_func:
-        if classifier and i >= 10:
-            class_label = 2
+        if sentiment_switch:
+            if classifier and i >= 10:
+                if class_label == 3:
+                    class_label = 2
+                elif class_label == 2:
+                    class_label = 3
 
         # Get past/probs for current output, except for last word
         # Note that GPT takes 2 inputs: past + current_token

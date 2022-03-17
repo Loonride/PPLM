@@ -1,0 +1,1 @@
+python run_pplm.py -D sentiment --class_label 2 --cond_text "The house" --length 50 --gamma 1.0 --num_iterations 10 --num_samples 20 --stepsize 0.05 --kl_scale 0.01 --gm_scale 0.95 --sample --verbosity verbose --seed 1
